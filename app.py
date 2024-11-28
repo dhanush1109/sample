@@ -1,6 +1,6 @@
 import streamlit as st
 
-# Initialize global variables
+# Initialize session state variables
 if "player_money" not in st.session_state:
     st.session_state.player_money = 500
 if "player_points" not in st.session_state:
@@ -10,21 +10,19 @@ if "current_round" not in st.session_state:
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
 
-# Welcome message
-if not st.session_state.game_started:
+# Welcome message and game introduction
+def welcome_message():
     st.title("Welcome to Financial Pathways Simulator!")
     st.subheader("“Learn, Save, Invest, and Master Your Money Journey!”")
     st.write("In this game, you'll make financial decisions to earn points and grow your savings.")
     st.write("You start with ₹500. Make wise decisions and see how much you can save!")
-
     if st.button("Start the Game"):
         st.session_state.game_started = True
         st.session_state.current_round = 1
         st.session_state.player_points = 0
         st.session_state.player_money = 500
-        st.experimental_rerun()
 
-# Scenarios and options
+# Scenarios and options for each round
 scenarios = [
     {
         "question": "Your favorite cafe has launched a special dessert for ₹250. What do you do?",
@@ -37,14 +35,14 @@ scenarios = [
         "tip": "Sometimes it’s okay to spend, but finding creative ways to save can teach valuable skills!"
     },
     {
-        "question": "Your friend’s birthday is coming up, and everyone is contributing ₹300. What do you do?",
+        "question": "Your friend’s birthday is coming up, and everyone is contributing ₹300 for a gift. What do you do?",
         "options": [
-            ("Contribute ₹300 and avoid conflicts.", 5, -300),
+            ("Contribute ₹300 and avoid conflicts with friends.", 5, -300),
             ("Suggest a less expensive gift everyone can afford.", 7.5, 0),
-            ("Politely decline and explain your financial goals.", 10, 0),
+            ("Politely decline to contribute, explaining your goals.", 10, 0),
             ("Borrow ₹300 and repay later.", 2.5, -300),
         ],
-        "tip": "Balance social obligations with financial priorities."
+        "tip": "Balance social obligations with financial priorities. Be honest about your limits!"
     },
     {
         "question": "You’ve earned ₹1,000 helping your neighbor. How will you allocate it?",
@@ -52,9 +50,9 @@ scenarios = [
             ("Spend ₹700, save ₹200, invest ₹100.", 5, 0),
             ("Spend ₹500, save ₹300, invest ₹200.", 7.5, 0),
             ("Save ₹600, invest ₹300, spend ₹100.", 10, 0),
-            ("Spend it all on shopping.", 2.5, -1000),
+            ("Spend it all on shopping.", 2.5, 0),
         ],
-        "tip": "Budgeting ensures money is allocated to both needs and goals."
+        "tip": "Budgeting ensures your money goes toward needs and future goals."
     },
     {
         "question": "You earn ₹3,000 in a job, and 10% will be deducted as taxes. What do you do?",
@@ -77,58 +75,58 @@ scenarios = [
         "tip": "Insurance helps manage risks and reduce unexpected costs."
     },
     {
-        "question": "A financial advisor introduces mutual funds. You have ₹2,000 saved. What do you do?",
+        "question": "A financial advisor introduces mutual funds. You have ₹2,000 saved. What will you do?",
         "options": [
-            ("Invest ₹2,000 after research.", 10, -2000),
+            ("Invest ₹2,000 after researching mutual funds.", 10, -2000),
             ("Invest ₹1,000 and save the rest.", 7.5, -1000),
             ("Avoid investing because you’re unsure.", 5, 0),
-            ("Spend all ₹2,000 on desires.", 2.5, -2000),
+            ("Spend all ₹2,000 on personal desires.", 2.5, -2000),
         ],
-        "tip": "Investing early, even with small amounts, helps grow wealth."
+        "tip": "Investing early can grow your wealth over time thanks to compounding returns."
     },
     {
-        "question": "Friends are going to an amusement park for ₹800. You’re saving for a phone. What do you do?",
+        "question": "Your friends are going to an amusement park for ₹800. You’re saving for a new phone. What do you do?",
         "options": [
-            ("Go and postpone saving for the phone.", 5, -800),
-            ("Skip the park and explain your goal.", 10, 0),
-            ("Ask parents for ₹800 to avoid missing out.", 2.5, 0),
-            ("Split the ticket cost with a friend.", 7.5, -400),
+            ("Go to the park and postpone saving for the phone.", 5, -800),
+            ("Skip the park and explain your savings goal to friends.", 10, 0),
+            ("Ask your parents for ₹800 to avoid missing out.", 2.5, 0),
+            ("Split the ticket cost with a friend and still go.", 7.5, -400),
         ],
-        "tip": "Set boundaries and prioritize long-term goals."
+        "tip": "Set boundaries and prioritize long-term goals over short-term fun."
     },
     {
-        "question": "A classmate needs ₹300 for books. You’ve saved ₹1,500. What do you do?",
+        "question": "A classmate needs ₹300 to buy books. You’ve saved ₹1,500. What will you do?",
         "options": [
-            ("Lend ₹300 and trust repayment.", 7.5, -300),
+            ("Lend ₹300 and trust them to repay.", 7.5, -300),
             ("Give ₹300 as a gift.", 10, -300),
-            ("Politely decline to stay focused on your goals.", 5, 0),
-            ("Lend ₹300 with interest.", 2.5, -300),
+            ("Politely decline, focusing on your goals.", 5, 0),
+            ("Lend ₹300 but charge interest.", 2.5, -300),
         ],
-        "tip": "Helping others is noble but balance generosity with responsibility."
+        "tip": "Helping others is noble, but balance generosity with personal responsibilities."
     },
     {
-        "question": "Your phone repair costs ₹4,000. You’ve saved ₹5,000 for a trip. What’s next?",
+        "question": "Your phone breaks, and repair costs ₹4,000. What’s your next step?",
         "options": [
-            ("Use savings to repair the phone.", 7.5, -4000),
+            ("Use your trip savings to repair the phone.", 7.5, -4000),
             ("Postpone the repair and save more.", 10, 0),
-            ("Borrow ₹4,000 from parents.", 5, 0),
-            ("Replace the phone with an expensive model.", 2.5, -10000),
+            ("Borrow ₹4,000 from your parents.", 5, 0),
+            ("Replace the phone with an expensive model.", 2.5, -5000),
         ],
-        "tip": "Emergencies can derail plans, but careful choices minimize impact."
+        "tip": "Emergencies can derail plans, but careful decisions help minimize impact."
     },
     {
-        "question": "You want to save for college in 5 years. What’s your plan?",
+        "question": "You want to save for college in 5 years. How do you plan?",
         "options": [
-            ("Open a recurring deposit account.", 10, 0),
+            ("Open a recurring deposit account and save monthly.", 10, 0),
             ("Invest in a long-term mutual fund.", 7.5, 0),
             ("Save irregularly, whenever possible.", 5, 0),
-            ("Spend now and plan later.", 2.5, 0),
+            ("Spend money now and plan later.", 2.5, 0),
         ],
-        "tip": "Long-term goals require focus and disciplined saving."
+        "tip": "Setting long-term goals helps you stay disciplined in financial planning."
     }
 ]
 
-# Helper function to display the current round's scenario
+# Display scenario and options
 def display_scenario(round_num):
     scenario = scenarios[round_num - 1]
     st.subheader(f"Round {round_num}")
@@ -139,11 +137,11 @@ def display_scenario(round_num):
             st.session_state.player_points += points
             st.session_state.player_money += money_change
             st.session_state.current_round += 1
-            st.stop()  # Stops execution to avoid proceeding prematurely.
+            break
 
     st.write(f"**Tip:** {scenario['tip']}")
 
-# Display the current round or end the game
+# Game logic
 if st.session_state.game_started:
     if st.session_state.current_round <= len(scenarios):
         display_scenario(st.session_state.current_round)
@@ -153,3 +151,5 @@ if st.session_state.game_started:
         st.write(f"**Final Savings:** ₹{st.session_state.player_money}")
         st.write("Remember, every financial decision shapes your future. Stay informed, stay smart!")
         st.session_state.game_started = False
+else:
+    welcome_message()
